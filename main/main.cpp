@@ -115,8 +115,11 @@ void tickTask(void* userParam)
   const auto quantum = 4.0;
   bool tick = false;
   bool clockactive = false;
+  bool phaseon = false;
   bool startpressed = false;
   bool stoppressed = false;
+  int clockcount = 0;
+  int clockbalance = 0;
 
   enum runningstate {
     STOPPED,
@@ -126,7 +129,7 @@ void tickTask(void* userParam)
 
   runningstate = STOPPED;
 
-  std::chrono::microseconds latency = std::chrono::microseconds(8000);
+  std::chrono::microseconds latency = std::chrono::microseconds(9000);
   std::chrono::microseconds lasttime = std::chrono::microseconds(0);
   std::chrono::microseconds currenttime = std::chrono::microseconds(0);
 
@@ -162,6 +165,8 @@ void tickTask(void* userParam)
         if (stoppressed) {
           char d[] = {0xFC};
           sendData(d, 1);
+          clockcount = 0;
+          phaseon = false;
           runningstate = STOPPED;
         }
         break;
@@ -174,26 +179,69 @@ void tickTask(void* userParam)
     const auto beat = state.beatAtTime(currenttime, quantum);
     const auto lastbeat = state.beatAtTime(lasttime, quantum);
 
-    if (runningstate == WAITING && phase < lastphase) {
+    if (runningstate == WAITING && phase < lastphase && !phaseon) {
       char d[] = {0xFA};
       sendData(d, 1);
-      //phaseon = true;
+      phaseon = true;
+      clockcount = 0;
+      clockbalance = 0;
       runningstate = STARTED;
     }
 
     if (runningstate == STARTED) {
-      gpio_set_level(LED, fmodf(phase, 1.) < 0.1);
+      //gpio_set_level(LED, fmodf(phase, 1.) < 0.1);
 
-      const auto clock = fmodf(fmodf(beat, 1.) * 24., 1.);
-      const auto lastclock = fmodf(fmodf(lastbeat, 1.) * 24., 1.);
+      if (phase < lastphase && !phaseon) {
+
+        //check the clock count here!
+        int clockdiff = (24 * quantum) - clockcount;
+        clockbalance += clockdiff;
+
+        std::cout << "count " << clockcount 
+          << " target " << (24 * quantum) 
+          << " diff " << clockdiff
+          << " balance " << clockbalance
+          << " tempo " << state.tempo()
+          << " lastphase " << lastphase
+          << " phase " << phase
+          << std::endl;
+
+        gpio_set_level(LED, true);
+        clockcount = 0;
+        phaseon = true;
+      } else if (phase >= lastphase && phaseon) {
+        phaseon = false;
+      }
+      if (phase > 0.2) {
+        gpio_set_level(LED, false);
+      }
+
+      // const auto clock = fmodf(fmodf(beat, 1.) * 24., 1.);
+      // const auto lastclock = fmodf(fmodf(lastbeat, 1.) * 24., 1.);
+      const auto clock = fmodf(fmodf(phase, quantum) * 24., 1.);
+      const auto lastclock = fmodf(fmodf(lastphase, quantum) * 24., 1.);
       if (clock < lastclock && !clockactive) {
-        char d[] = {0xF8};
-        sendData(d, 1);
+        if (clockbalance < 0) {
+          // do nothing now, and increment clockbalance
+          clockbalance += 1;
+        } else if (clockbalance > 0) {
+          // add one clock tick and decrement balance
+          char d[] = {0xF8, 0xF8};
+          sendData(d, 2);
+          clockbalance -= 1;
+        } else {
+          // happy path
+          char d[] = {0xF8};
+          sendData(d, 1);
+        }
+        clockcount ++;
         gpio_set_level(LED2, true);
         clockactive = true;
       } else if (clock >= lastclock && clockactive) {
-        gpio_set_level(LED2, false);
         clockactive = false;
+      }
+      if (clock > 0.5) {
+        gpio_set_level(LED2, false);
       }
     }
 
