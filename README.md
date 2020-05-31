@@ -1,2 +1,3 @@
-# link-idf-example
-Example for using link-idf
+# link2midi
+
+syncs to ableton link and starts/stops midi clock on button presses.

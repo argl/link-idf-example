@@ -197,14 +197,14 @@ void tickTask(void* userParam)
         int clockdiff = (24 * quantum) - clockcount;
         clockbalance += clockdiff;
 
-        std::cout << "count " << clockcount 
-          << " target " << (24 * quantum) 
-          << " diff " << clockdiff
-          << " balance " << clockbalance
-          << " tempo " << state.tempo()
-          << " lastphase " << lastphase
-          << " phase " << phase
-          << std::endl;
+        // std::cout << "count " << clockcount 
+        //   << " target " << (24 * quantum) 
+        //   << " diff " << clockdiff
+        //   << " balance " << clockbalance
+        //   << " tempo " << state.tempo()
+        //   << " lastphase " << lastphase
+        //   << " phase " << phase
+        //   << std::endl;
 
         gpio_set_level(LED, true);
         clockcount = 0;
