@@ -23,7 +23,8 @@ static const int TX_BUF_SIZE = 128;
 #define TXD_PIN (GPIO_NUM_17)
 #define RXD_PIN (GPIO_NUM_16)
 
-enum runningstate {
+enum runningstate
+{
   STOPPED,
   WAITING,
   STARTED
@@ -33,39 +34,38 @@ void midi_init(void)
 {
   // memset(midibuf, 0, MIDIBUFSIZE);
   uart_config_t uart_config = {
-    .baud_rate = 31250,
-    .data_bits = UART_DATA_8_BITS,
-    .parity = UART_PARITY_DISABLE,
-    .stop_bits = UART_STOP_BITS_1,
-    .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-    .rx_flow_ctrl_thresh = 122
-  };
+      .baud_rate = 31250,
+      .data_bits = UART_DATA_8_BITS,
+      .parity = UART_PARITY_DISABLE,
+      .stop_bits = UART_STOP_BITS_1,
+      .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+      .rx_flow_ctrl_thresh = 122};
   // Configure UART parameters
   ESP_ERROR_CHECK(
-    uart_driver_install(UART_NUM_1, RX_BUF_SIZE * 2, TX_BUF_SIZE * 2, 0, NULL, 0));
+      uart_driver_install(UART_NUM_1, RX_BUF_SIZE * 2, TX_BUF_SIZE * 2, 0, NULL, 0));
   ESP_ERROR_CHECK(uart_param_config(UART_NUM_1, &uart_config));
   ESP_ERROR_CHECK(uart_set_tx_idle_num(UART_NUM_1, 0));
   ESP_ERROR_CHECK(
-    uart_set_pin(UART_NUM_1, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+      uart_set_pin(UART_NUM_1, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
   std::cout << "midi serial setup ok" << std::endl;
 }
 
-void sendData(const char* data, int len)
+void sendData(const char *data, int len)
 {
   uart_tx_chars(UART_NUM_1, data, len);
 }
 
-unsigned int if_nametoindex(const char* ifName)
+unsigned int if_nametoindex(const char *ifName)
 {
   return 0;
 }
 
-char* if_indextoname(unsigned int ifIndex, char* ifName)
+char *if_indextoname(unsigned int ifIndex, char *ifName)
 {
   return nullptr;
 }
 
-void IRAM_ATTR timer_group1_isr(void* userParam)
+void IRAM_ATTR timer_group1_isr(void *userParam)
 {
   static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
@@ -79,33 +79,32 @@ void IRAM_ATTR timer_group1_isr(void* userParam)
   }
 }
 
-void timerGroup1Init(int timerPeriodUS, void* userParam)
+void timerGroup1Init(int timerPeriodUS, void *userParam)
 {
   timer_config_t config = {.alarm_en = TIMER_ALARM_EN,
-    .counter_en = TIMER_PAUSE,
-    .intr_type = TIMER_INTR_LEVEL,
-    .counter_dir = TIMER_COUNT_UP,
-    .auto_reload = TIMER_AUTORELOAD_EN,
-    .divider = 80};
+                           .counter_en = TIMER_PAUSE,
+                           .intr_type = TIMER_INTR_LEVEL,
+                           .counter_dir = TIMER_COUNT_UP,
+                           .auto_reload = TIMER_AUTORELOAD_EN,
+                           .divider = 80};
 
   timer_init(TIMER_GROUP_1, TIMER_0, &config);
   timer_set_counter_value(TIMER_GROUP_1, TIMER_0, 0);
   timer_set_alarm_value(TIMER_GROUP_1, TIMER_0, timerPeriodUS);
   timer_enable_intr(TIMER_GROUP_1, TIMER_0);
   timer_isr_register(
-    TIMER_GROUP_1, 
-    TIMER_0, 
-    &timer_group1_isr, 
-    userParam, 
-    ESP_INTR_FLAG_LEVEL3 | ESP_INTR_FLAG_IRAM,
-    // 0,
-    nullptr
-  );
+      TIMER_GROUP_1,
+      TIMER_0,
+      &timer_group1_isr,
+      userParam,
+      ESP_INTR_FLAG_LEVEL3 | ESP_INTR_FLAG_IRAM,
+      // 0,
+      nullptr);
 
   timer_start(TIMER_GROUP_1, TIMER_0);
 }
 
-void tickTask(void* userParam)
+void tickTask(void *userParam)
 {
   timerGroup1Init(300, userParam);
 
@@ -121,7 +120,8 @@ void tickTask(void* userParam)
   int clockcount = 0;
   int clockbalance = 0;
 
-  enum runningstate {
+  enum runningstate
+  {
     STOPPED,
     WAITING,
     STARTED
@@ -149,29 +149,32 @@ void tickTask(void* userParam)
 
     //gpio_set_level(LED, true);
 
-    switch (runningstate) {
-      case STOPPED:
-        gpio_set_level(LED, link.numPeers() > 0);
-        gpio_set_level(LED2, false);
-        if (startpressed) {
-          runningstate = WAITING;
-        }
-        break;
-      case WAITING:
-          gpio_set_level(LED, link.numPeers() > 0);
-          gpio_set_level(LED2, true);
-          // intentionally no break here!
-      case STARTED:
-        if (stoppressed) {
-          char d[] = {0xFC};
-          sendData(d, 1);
-          clockcount = 0;
-          phaseon = false;
-          runningstate = STOPPED;
-        }
-        break;
-      default:
-        break;
+    switch (runningstate)
+    {
+    case STOPPED:
+      gpio_set_level(LED, link.numPeers() > 0);
+      gpio_set_level(LED2, false);
+      if (startpressed)
+      {
+        runningstate = WAITING;
+      }
+      break;
+    case WAITING:
+      gpio_set_level(LED, link.numPeers() > 0);
+      gpio_set_level(LED2, true);
+      // intentionally no break here!
+    case STARTED:
+      if (stoppressed)
+      {
+        char d[] = {0xFC};
+        sendData(d, 1);
+        clockcount = 0;
+        phaseon = false;
+        runningstate = STOPPED;
+      }
+      break;
+    default:
+      break;
     }
 
     const auto phase = state.phaseAtTime(currenttime, quantum);
@@ -179,7 +182,8 @@ void tickTask(void* userParam)
     const auto beat = state.beatAtTime(currenttime, quantum);
     const auto lastbeat = state.beatAtTime(lasttime, quantum);
 
-    if (runningstate == WAITING && phase < lastphase && !phaseon) {
+    if (runningstate == WAITING && phase < lastphase && !phaseon)
+    {
       char d[] = {0xFA};
       sendData(d, 1);
       phaseon = true;
@@ -188,17 +192,19 @@ void tickTask(void* userParam)
       runningstate = STARTED;
     }
 
-    if (runningstate == STARTED) {
+    if (runningstate == STARTED)
+    {
       //gpio_set_level(LED, fmodf(phase, 1.) < 0.1);
 
-      if (phase < lastphase && !phaseon) {
+      if (phase < lastphase && !phaseon)
+      {
 
         //check the clock count here!
         int clockdiff = (24 * quantum) - clockcount;
         clockbalance += clockdiff;
 
-        // std::cout << "count " << clockcount 
-        //   << " target " << (24 * quantum) 
+        // std::cout << "count " << clockcount
+        //   << " target " << (24 * quantum)
         //   << " diff " << clockdiff
         //   << " balance " << clockbalance
         //   << " tempo " << state.tempo()
@@ -209,10 +215,13 @@ void tickTask(void* userParam)
         gpio_set_level(LED, true);
         clockcount = 0;
         phaseon = true;
-      } else if (phase >= lastphase && phaseon) {
+      }
+      else if (phase >= lastphase && phaseon)
+      {
         phaseon = false;
       }
-      if (phase > 0.2) {
+      if (phase > 0.2)
+      {
         gpio_set_level(LED, false);
       }
 
@@ -220,27 +229,36 @@ void tickTask(void* userParam)
       // const auto lastclock = fmodf(fmodf(lastbeat, 1.) * 24., 1.);
       const auto clock = fmodf(fmodf(phase, quantum) * 24., 1.);
       const auto lastclock = fmodf(fmodf(lastphase, quantum) * 24., 1.);
-      if (clock < lastclock && !clockactive) {
-        if (clockbalance < 0) {
+      if (clock < lastclock && !clockactive)
+      {
+        if (clockbalance < 0)
+        {
           // do nothing now, and increment clockbalance
           clockbalance += 1;
-        } else if (clockbalance > 0) {
+        }
+        else if (clockbalance > 0)
+        {
           // add one clock tick and decrement balance
           char d[] = {0xF8, 0xF8};
           sendData(d, 2);
           clockbalance -= 1;
-        } else {
+        }
+        else
+        {
           // happy path
           char d[] = {0xF8};
           sendData(d, 1);
         }
-        clockcount ++;
+        clockcount++;
         gpio_set_level(LED2, true);
         clockactive = true;
-      } else if (clock >= lastclock && clockactive) {
+      }
+      else if (clock >= lastclock && clockactive)
+      {
         clockactive = false;
       }
-      if (clock > 0.5) {
+      if (clock > 0.5)
+      {
         gpio_set_level(LED2, false);
       }
     }
@@ -265,7 +283,7 @@ extern "C" void app_main()
   // timerGroup1Init(100, tickSemphr);
 
   xTaskCreate(tickTask, "tick", 8192, tickSemphr, configMAX_PRIORITIES - 1, nullptr);
-  
+
   // while (true)
   // {
   //   ableton::link::platform::IoContext::poll();
