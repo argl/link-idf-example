@@ -166,6 +166,20 @@ void tickTask(void *userParam)
     case STARTED:
       if (stoppressed)
       {
+        // char d[] = {
+        //     0x11,
+        //     0x12,
+        //     0x13,
+        //     0x14,
+        //     0x15,
+        //     0x16,
+        //     0x17,
+        //     0x18,
+        //     0x19,
+        //     0x1a,
+        //     0x1b,
+        // };
+        // sendData(d, 11);
         char d[] = {0xFC};
         sendData(d, 1);
         clockcount = 0;
@@ -184,6 +198,20 @@ void tickTask(void *userParam)
 
     if (runningstate == WAITING && phase < lastphase && !phaseon)
     {
+      // char d[] = {
+      //     0x01,
+      //     0x02,
+      //     0x03,
+      //     0x04,
+      //     0x05,
+      //     0x06,
+      //     0x07,
+      //     0x08,
+      //     0x09,
+      //     0x0a,
+      //     0x0b,
+      // };
+      // sendData(d, 11);
       char d[] = {0xFA};
       sendData(d, 1);
       phaseon = true;
@@ -203,14 +231,14 @@ void tickTask(void *userParam)
         int clockdiff = (24 * quantum) - clockcount;
         clockbalance += clockdiff;
 
-        // std::cout << "count " << clockcount
-        //   << " target " << (24 * quantum)
-        //   << " diff " << clockdiff
-        //   << " balance " << clockbalance
-        //   << " tempo " << state.tempo()
-        //   << " lastphase " << lastphase
-        //   << " phase " << phase
-        //   << std::endl;
+        std::cout << "count " << clockcount
+                  << " target " << (24 * quantum)
+                  << " diff " << clockdiff
+                  << " balance " << clockbalance
+                  << " tempo " << state.tempo()
+                  << " lastphase " << lastphase
+                  << " phase " << phase
+                  << std::endl;
 
         gpio_set_level(LED, true);
         clockcount = 0;
@@ -245,6 +273,21 @@ void tickTask(void *userParam)
         }
         else
         {
+          // char d[] = {
+          //     0x01,
+          //     0x02,
+          //     0x03,
+          //     0x04,
+          //     0x05,
+          //     0x06,
+          //     0x07,
+          //     0x08,
+          //     0x09,
+          //     0x0a,
+          //     0x0b,
+          // };
+          // sendData(d, 11);
+
           // happy path
           char d[] = {0xF8};
           sendData(d, 1);
