@@ -1,6 +1,5 @@
 .DS_Store
 build
-sdkconfig
 
 # Prerequisites
 *.d
@@ -34,3 +33,5 @@ sdkconfig
 *.exe
 *.out
 *.app
+
+.vscode
